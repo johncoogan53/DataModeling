@@ -106,4 +106,6 @@ mlr_mod_interact <- lm(mpg~weight*origin_fac,
 summary(mlr_mod_interact)
 ```
 
-We see two extra lines here \[weight: European and weight: Japanese\].
+Per lb increase in weight, mpg increases by an **additional** 0.0000036, on average, all else held constant, for European cars compared to American cars. This difference is not statistically significant (p\>0.99).
+
+Per lb increase in weight, mpg decreases by 0.011, on average, for European cars. For American cars, mpg decreases by 0.007, on average, per lb increase in weight. The difference in effects, 0.004, is statistically significant at the 0.05 level (p=0.013).
