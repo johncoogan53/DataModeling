@@ -1,0 +1,107 @@
+---
+title: "Application Exercise 1"
+format: html
+editor: visual
+---
+
+### Application Exercise 1
+
+```{r}
+library(tidymodels)
+library(tidyverse)
+library(palmerpenguins)
+```
+
+```{r}
+glimpse(penguins)
+```
+
+## Variable Types:
+
+-   Categorical: sex, island, species
+
+-   Numeric: bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, year
+
+## Outcome is flipper length and predictor will be body mass
+
+```{r}
+ggplot(penguins, aes(x=body_mass_g,y=flipper_length_mm))+
+  geom_point()+
+  labs(x="Penguin Body Mass (g)", 
+       y="Penguin Flipper Length (mm)")
+```
+
+## Color the plot by sex:
+
+```{r}
+ggplot(penguins, aes(x=body_mass_g,y=flipper_length_mm, col = sex))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Penguin Body Mass (g)", 
+       y="Penguin Flipper Length (mm)")
+```
+
+## Color by species:
+
+```{r}
+ggplot(penguins, aes(x=body_mass_g,y=flipper_length_mm, col = species))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Penguin Body Mass (g)", 
+       y="Penguin Flipper Length (mm)")
+```
+
+## Fit a model regressing the outcome variable you selected onto the primary predictor of interest, sex, and species.
+
+```{r}
+penguin_mod <- lm(flipper_length_mm~body_mass_g+sex+species,
+                   data=penguins)
+summary(penguin_mod)
+```
+
+## Estimate Interpretation:
+
+Body Mass Estimate: On average for every gram increase in body mass, flipper length increases by 0.00065 mm. This is statistically significant association (p\<0.05, p = 2e-16)
+
+Sex estimate: On average, Male penguins flipper length is 2.478 mm longer than females holding all other variables constant. This association is statistically significant (p\<0.05, p = 0.0039)
+
+Chinstrap estimate: On average, Chinstrap species flipper length is 5.544 mm longer than Adelie species penguins holding all else constant. This association is statistically significant (p\<0.05, p = 9.92e-12) and can be observed in the plot mass for species.
+
+Gentoo estimate: On average, Gentoo species flipper length is 18.02 mm longer than Adelie species penguins holding all else constant. This association is is statistically significant (p\<0.05, p = 2e-16). This association is also observable in the plot mass above.
+
+## Now we will execute a nested F-test with the full model above and a reduced model without species. This will allow us to see the effect that species has on the overall model
+
+First we make the reduced model:
+
+```{r}
+penguin_mod_reduced <- lm(flipper_length_mm~body_mass_g+sex,
+                   data=penguins)
+summary(penguin_mod_reduced)
+```
+
+And now we conduct the nested F-test, this test compares the reduced model (which omitted species) and the full model to evaluate if species inclusion into the model increases the fit of the model:
+
+```{r}
+mod_reduced <- penguin_mod
+mod_full <- penguin_mod_reduced
+
+anova(mod_reduced, mod_full, test="F")
+```
+
+We see that the p value for model 1 vs model 2 is very small, this indicates strong evidence that including 'species' into the model significantly improves the model fit.
+
+## Interaction Terms
+
+We can see from the sex plot above that there is no interaction between the sexes regarding flipper length. From the species plot we can see that while Gentoo and Chinstrap have some interaction, their best fit lines are roughly parallel and that species Adelie has more pronounced interaction with the other species. So we should build an interaction term on species:
+
+```{r}
+penguin_mod_interact <- lm(flipper_length_mm~body_mass_g*species,
+                       data=penguins)
+summary(penguin_mod_interact)
+```
+
+Here we see two additional lines for the interaction between species and flipper length.
+
+## R Squared interpretation:
+
+85.53% of the variance in flipper length is explained by body mass.
