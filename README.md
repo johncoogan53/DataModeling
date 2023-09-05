@@ -1,1 +1,1 @@
-This is a test of the github link with Rstudio a
+This is a test of the github link with Rstudio
