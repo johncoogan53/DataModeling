@@ -1,0 +1,109 @@
+---
+title: "Intro to MLR"
+format: html
+editor: visual
+---
+
+## Fitting an MLR model
+
+```{r}
+library(tidyverse)
+library(ISLR2)
+data("Auto")
+```
+
+```{r}
+glimpse(Auto)
+```
+
+Exploratory Data Analysis looking at weight and mpg
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg))+
+  geom_point()+
+  labs(x="Vehicle Weight (lbs)", 
+       y="MPG")
+```
+
+Looking at origin, we add a color in the aes for origin to color the data by its country of origin
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg, col=origin))+
+  geom_point()+
+  labs(x="Vehicle Weight (lbs)", 
+       y="MPG")
+```
+
+Here we have a categorical variable on a continuous scale, which is not what we want since we know that origin will only have 3 values. This is because if we look at our data, we see that origin is of values 1,2,3 instead of the countries (numeric instead of categorical). We can search google for "islr2 auto data set" to see some of the details of this set(https://rdrr.io/cran/ISLR2/man/Auto.html). We can see how this issue effects regression:
+
+Below we have a model object stored as a variable. We can look at what it outputs by using the summary() function.
+
+```{r}
+#regressing mpg on weight and origin
+mlr_mod_auto <- lm(mpg~weight+origin,
+                   data=Auto)
+summary(mlr_mod_auto)
+```
+
+We see a single estimate for origin which should not be interpreted because it can be misleading. This indicates a 1.15 increase in origin as other estimates are held static towards the outcome. This does not make sense. We need to have R interpret origin as a factor so that it does not look at it as a numeric variable:
+
+```{r}
+#create factor
+Auto$origin_fac <- factor(Auto$origin,
+                          levels=c(1,2,3),
+                          labels=c("American","European","Japanese"))
+```
+
+This will map the levels vector to a label vector in the order that they are written (1 to American ect.)
+
+```{r}
+glimpse(Auto)
+```
+
+Here we see the factored origin (origin_fac) displaying within the data set as its appropriate value. Lets retry the plot but with the factored variable and an updated label for our color aesthetic:
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg, col=origin_fac))+
+  geom_point()+
+  labs(x="Vehicle Weight (lbs)", 
+       y="MPG",col = "Origin")
+```
+
+Now lets look at the model again:
+
+```{r}
+#regressing mpg on weight and origin (Factored)
+mlr_mod_fac <- lm(mpg~weight+origin_fac,
+                   data=Auto)
+summary(mlr_mod_fac)
+```
+
+Now we can see that there is one estimate for weight and two estimates for the origin variable. American is our reference level since we see that R assigned European and Japanese as dummy variables (R does this alphabetically by default) and so we see their estimates listed and not an estimate for American.
+
+How do we interpret these:
+
+Weight Estimate: On average per unit increase in weight, average MPG decreases by 0.007. This is statistically significant (very small p value)
+
+European Estimate: On average, European cars' mpg is 0.97 higher than American cars' mpg, holding all else constant. This difference is not statistically significant at the 0.05 level (p=0.141). \[because we are holding all coefficients constant, this means that for any given weight, European cars have a 0.97 better fuel efficiency\] This can roughly be seen in the plot as a visually intuitive result with European mass largely overlapping the American mass while the Japanese mass is distinct.
+
+Add best fit lines with geom_smooth including se=False to remove confidence intervals:
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg, col=origin_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Vehicle Weight (lbs)", 
+       y="MPG",col = "Origin")
+```
+
+Because the European and American lines are largely parallel, we can intuitively conclude that there is not statistical interaction between those populations. We can see that the Japanese line of best fit is of a different slope and thus, there is interaction between cars of Japanese origin and the other car Origins.
+
+Here we build a model for interaction terms. R will automatically include main effects terms.
+
+```{r}
+mlr_mod_interact <- lm(mpg~weight*origin_fac,
+                       data=Auto)
+summary(mlr_mod_interact)
+```
+
+We see two extra lines here \[weight: European and weight: Japanese\].
