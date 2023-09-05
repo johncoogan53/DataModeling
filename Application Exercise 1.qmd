@@ -16,6 +16,10 @@ library(palmerpenguins)
 glimpse(penguins)
 ```
 
+```{r}
+summary(penguins)
+```
+
 ## Variable Types:
 
 -   Categorical: sex, island, species
@@ -79,7 +83,7 @@ penguin_mod_reduced <- lm(flipper_length_mm~body_mass_g+sex,
 summary(penguin_mod_reduced)
 ```
 
-And now we conduct the nested F-test, this test compares the reduced model (which omitted species) and the full model to evaluate if species inclusion into the model increases the fit of the model:
+And now we conduct the nested F-test, this test compares the reduced model (which omitted species) and the full model to evaluate if species inclusion into the model increases the fit of the model: (order matters here, reduced model comes first then the full model)
 
 ```{r}
 mod_reduced <- penguin_mod
@@ -88,7 +92,7 @@ mod_full <- penguin_mod_reduced
 anova(mod_reduced, mod_full, test="F")
 ```
 
-We see that the p value for model 1 vs model 2 is very small, this indicates strong evidence that including 'species' into the model significantly improves the model fit.
+We see that the p value for model 1 vs model 2 is very small, this indicates strong evidence that including 'species' into the model significantly improves the model fit. Looking for an association between species and flipper length.
 
 ## Interaction Terms
 
@@ -110,4 +114,4 @@ We can see this in the scatter plot colored by species since the slope of the Ge
 
 ## R Squared interpretation:
 
-85.53% of the variance in flipper length is explained by body mass.
+85.53% of the variance in flipper length is explained by body mass, species, and the interaction between body mass and species.
