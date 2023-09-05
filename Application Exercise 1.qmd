@@ -92,7 +92,7 @@ We see that the p value for model 1 vs model 2 is very small, this indicates str
 
 ## Interaction Terms
 
-We can see from the sex plot above that there is no interaction between the sexes regarding flipper length. From the species plot we can see that while Gentoo and Chinstrap have some interaction, their best fit lines are roughly parallel and that species Adelie has more pronounced interaction with the other species. So we should build an interaction term on species:
+We can see from the sex plot above that there is no interaction between the sexes regarding flipper length because the lines of best fit are roughly parallel. From the species plot we can see that while Gentoo and Chinstrap have some interaction, their best fit lines are roughly parallel and that species Adelie has more pronounced interaction with the other species. So we should build an interaction term on species:
 
 ```{r}
 penguin_mod_interact <- lm(flipper_length_mm~body_mass_g*species,
