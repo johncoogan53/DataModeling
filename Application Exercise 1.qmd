@@ -100,7 +100,13 @@ penguin_mod_interact <- lm(flipper_length_mm~body_mass_g*species,
 summary(penguin_mod_interact)
 ```
 
-Here we see two additional lines for the interaction between species and flipper length.
+So how do we interpret these additional coefficients for body_mass_g:speciesChinstrap and body_mass_g:speciesGentoo?
+
+Body Mass \| Chinstrap interaction: per gram increase in body weight, flipper length increased on average an additional 0.0005228 mm for Chinstrap species penguins compared to Adelie penguins. This difference is statistically significant (p = 0.00766)
+
+Body Mass \| Gentoo interaction: per gram increase in body weight, flipper length increased on average an additional 0.0002362 mm for Gentoo species penguins compared to Adelie penguins. This difference is not statistically significant.
+
+We can see this in the scatter plot colored by species since the slope of the Gentoo and Adelie lines are roughly parallel but the slope of the Chinstrap and Adelie lines are observably different slopes, indicating a statistically significant interaction between the two.
 
 ## R Squared interpretation:
 
