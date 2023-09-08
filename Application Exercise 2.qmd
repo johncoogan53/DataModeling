@@ -1,0 +1,377 @@
+---
+title: "Application Exercise 2"
+format: html
+editor: visual
+---
+
+# Application Exercise 2
+
+```{r}
+library(tidyverse)
+library(ISLR2)
+library(forcats)
+data(Auto)
+```
+
+### Load appropriate libraries and the auto data set
+
+```{r}
+glimpse(Auto)
+```
+
+Taking a look at the data we see that the name is the only categorical variable but origin should be so we will need to factor that variable in all likelihood. Lets do that now using the (https://rdrr.io/cran/ISLR2/man/Auto.html) as a data dictionary:
+
+```{r}
+#create factor
+Auto$origin_fac <- factor(Auto$origin,
+                          levels=c(1,2,3),
+                          labels=c("American","European","Japanese"))
+```
+
+We are also going to want to factor cylinders:
+
+```{r}
+Auto$cylinders_fac <- factor(Auto$cylinders,
+                             levels = c(4,6,8),
+                             labels = c("4","6","8"))
+
+#I want 4 as my reference level because that makes sense to me
+Auto$cylinders_fac <- relevel(Auto$cylinders_fac, ref = "4")
+```
+
+```{r}
+summary(Auto)
+```
+
+### Now we want to fit a model regressing mpg on horsepower, displacement, acceleration, cylinders, and origin
+
+```{r}
+mpg_mod <- lm(mpg~horsepower + displacement + acceleration + cylinders_fac +origin_fac,
+                   data=Auto)
+summary(mpg_mod)
+```
+
+We notice above that the standard error for each cylinders is my much higher than horsepower, acceleration, and origin. \[Interpretation needed\]'
+
+```{r}
+cylinder_counts <- count(Auto, cylinders_fac)
+print(cylinder_counts)
+```
+
+We see here that there is a small number of observations for 6 and 8 and a very small NA. Lets try to combine 6 and 8 and filter NA's:
+
+First to combine: (from research a new library will help here, the forcats library)
+
+```{r}
+Auto$cylinders_fac <- fct_collapse(Auto$cylinders_fac, "6-8" = c("6", "8"))
+table(Auto$cylinders_fac)
+```
+
+```{r}
+Auto_filter = Auto[!is.na(Auto$cylinders_fac),]
+```
+
+Lets run that regression again:
+
+```{r}
+mpg_mod_filter <- lm(mpg~horsepower + displacement + acceleration + cylinders_fac +origin_fac,
+                   data=Auto_filter)
+summary(mpg_mod_filter)
+```
+
+Now we can see some comparable standard errors for the combined cylinder category
+
+We can now look at the residual plot (which=1) and qq plot (which = 2) to verify that the assumptions of linear regression have been met
+
+```{r}
+plot(mpg_mod_filter,which=1)
+
+```
+
+```{r}
+plot(mpg_mod_filter,which=2)
+```
+
+## Assumptions of Linear Regression
+
+### Linearity:
+
+We look at the residuals plot vs fitted values to see if there are no patterns. Because residuals represent associations that are not explained by our model, if a pattern exists here we may have a non-linear relationship between the response variable and our predictors.
+
+From this plot, we don't see any sort of pattern that would break the linearity assumption
+
+### Independence of errors:
+
+This is associated mostly with study design. By thinking about our predictors and response we can intuit that none of these factors are dependent on each other.
+
+### Normality of errors:
+
+Here we look to the qq plot to observe adherence to a 45 degree line. Our plot largely adheres to this line with some falloff towards the 3rd Theoretical Quantile. Given that regression models are fairly robust to deviations from standard normal distribution for error, we are comfortable proceeding with this model.
+
+### Equal variance of errors:
+
+Again we see no patterns in the residuals plot. There doesn't appear to be fanning although the spread from 15 to 20 appears to fan, I think this a linear model will be sufficient here.
+
+## Predictor Analysis:
+
+### MPG vs Displacement:
+
+Now begin our analysis of this data by investigating the relationship between our response variable and predictors, starting with displacement:
+
+```{r}
+ggplot(Auto_filter, aes(x=displacement,y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Vehicle Displacement (in^3)", 
+       y="MPG")
+```
+
+Our plot does not follow a linear pattern here. We have two options: we can choose a non-linear model (which I don't know how to do) so we will chose the second option, transform the variable.
+
+Lets try a log transform:
+
+```{r}
+ggplot(Auto_filter, aes(x=log(displacement),y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="log(Vehicle Displacement (in^3))", 
+       y="MPG")
+```
+
+We see that with a log transform, our plot follows a much more linear relationship. This now makes us consider our interpretation of this data more closely.
+
+Now we want to incorporate that into our model below:
+
+```{r}
+mpg_mod_filter_trans <- lm(mpg~horsepower + log(displacement) + acceleration + cylinders_fac +origin_fac,
+                   data=Auto_filter)
+summary(mpg_mod_filter_trans)
+```
+
+To compare with the original model:
+
+```{r}
+mpg_mod_filter <- lm(mpg~horsepower + displacement + acceleration + cylinders_fac +origin_fac,
+                   data=Auto_filter)
+summary(mpg_mod_filter)
+```
+
+We note that the log(displacement)'s p value went way down but the standard error increased dramatically. The standard error value is a log space value and so its comparison to other standard variables is somewhat meaningless. What is important here is that we achieved a statistically significant p value against the linear model indicating the log transform was appropriate for a linear association between mpg and displacement.
+
+Lets add cylinders to color the plot above:
+
+```{r}
+ggplot(Auto_filter, aes(x=log(displacement),y=mpg, col = cylinders_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="log(Vehicle Displacement (in^3))", 
+       y="MPG", col = "Cylinders")
+```
+
+There is a subtle variation in the slopes here. Given that these lines are nearly parallel, I think including an interaction term between the two cylinder categories would not be valuable.
+
+Lets do the same thing with origin:
+
+```{r}
+ggplot(Auto_filter, aes(x=log(displacement),y=mpg, col = origin_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="log(Vehicle Displacement (in^3))", 
+       y="MPG", col = "Origin")
+```
+
+```{r}
+cylinder_counts <- count(Auto, cylinders_fac)
+print(cylinder_counts)
+origin_counts <- count(Auto, origin_fac)
+print(origin_counts)
+```
+
+Of note above: we see a distinct separation within the data for cylinders and origin. It is important to realize that this could be due to American cars having almost 3x the number of observations within the data set than the foreign cars. (for the purposes of the exercise, and because the difference in the two populations makes intuitive sense, we will proceed with the interaction term)
+
+An interaction here between European and Japanese cars and the reference level seems appropriate given the difference in the slope between both sub populations and American cars. We can see from these two plots that Origin and Cylinders seem to be associated, we can see a distinct cluster of low MPG-high log(displacement) vehicles that are exclusively American origin while European cars are isolated to lower displacement, higher MPG. In these two plots the association is most stark for cylinders, we see in this plot that from cylinders we can likely infer the vehicles origin which is an interaction term.
+
+Lets include that below:
+
+```{r}
+Auto_mod_interact <- lm(mpg~horsepower + log(displacement) + acceleration + cylinders_fac*origin_fac,
+                   data=Auto_filter)
+summary(Auto_mod_interact)
+```
+
+```{r}
+
+plot(Auto_mod_interact, which = 1)
+title("Model with interaction and transform")
+plot(mpg_mod, which = 1)
+title("Original Model")
+
+```
+
+The changes to the residual plot appear to be positive in that they remove patterns from the original residuals plot.
+
+```{r}
+plot(Auto_mod_interact,which=2)
+title("Model with interaction and transform")
+plot(mpg_mod, which = 2)
+title("Original Model")
+```
+
+Plotting the updates to qq and residuals for the original model.
+
+Above we have investigated the relationship between the response variable of MPG against one predictor: displacement. We found that a variable transform would be appropriate and we identified interaction terms between cylinders and origin. We should repeat this process for acceleration and horsepower to ensure that we confirm our assumptions for linear regression with each predictor (or transform the variable appropriately if not). We may also identify additional interaction terms to increase the accuracy of our model:
+
+### MPG vs Acceleration:
+
+We will start by plotting just the response variable against acceleration:
+
+```{r}
+ggplot(Auto_filter, aes(x=acceleration,y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Acceleration", 
+       y="MPG")
+```
+
+Certainly no non-linear patterns but the association between acceleration and MPG seems weak. We can color the model to attempt to see other patterns too:
+
+```{r}
+ggplot(Auto_filter, aes(x=acceleration,y=mpg, col= cylinders_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Acceleration", 
+       y="MPG", col = "cylinders")
+ggplot(Auto_filter, aes(x=acceleration,y=mpg, col= origin_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Acceleration", 
+       y="MPG", col = "Origin")
+ggplot(Auto_filter, aes(x=acceleration,y=mpg, col= displacement))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Acceleration", 
+       y="MPG", col = "Displacement")
+ggplot(Auto_filter, aes(x=acceleration,y=mpg, col= horsepower))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Acceleration", 
+       y="MPG", col = "Horsepower")
+```
+
+We have captured the interaction between origin and cylinders above and we see that interaction manifest again logically in acceleration. I am inclined not to include an additional interaction term for acceleration since it may needlessly increase model complexity and make it difficult to interpret findings.
+
+### MPG vs Horsepower:
+
+Finally we will investigate the horsepower predictor's relationship with the mpg response variable.
+
+```{r}
+ggplot(Auto_filter, aes(x=horsepower,y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Horsepower", 
+       y="MPG")
+```
+
+We see a pretty clear non-linear relationship here. I want to take a look at what the residuals plot would be for a linear model regressing mpg on horsepower alone:
+
+```{r}
+mpg_mod_hp <- lm(mpg~horsepower,
+                   data=Auto_filter)
+summary(mpg_mod_hp)
+plot(mpg_mod_hp, which = 1)
+```
+
+We can see the residuals plot has a quadratic functional appearance although our model summary gives us an estimate coefficient with a statistically significant p value. I think this highlights the importance of ensuring the assumptions of linearity are met prior to attempting to interpret the model.
+
+So what transform should we use for horsepower, lets experiment with a few (sqrt(x), log(x))
+
+sqrt(x) transform:
+
+```{r}
+ggplot(Auto_filter, aes(x=sqrt(horsepower),y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Root Horsepower", 
+       y="MPG")
+
+mpg_mod_hp_root <- lm(mpg~sqrt(horsepower),
+                   data=Auto_filter)
+plot(mpg_mod_hp_root, which = 1)
+```
+
+log(x) transform:
+
+```{r}
+ggplot(Auto_filter, aes(x=log(horsepower),y=mpg))+
+  geom_point()+
+  geom_smooth(method="lm",se=FALSE)+
+  labs(x="Log Horsepower", 
+       y="MPG")
+
+mpg_mod_hp_log <- lm(mpg~log(horsepower),
+                   data=Auto_filter)
+plot(mpg_mod_hp_log, which = 1)
+title("Log Transform")
+plot(mpg_mod_hp_root, which = 1)
+title("Root Transform")
+```
+
+We can see from the residual plot that the log transform appears to reduce fanning the most indicating a better heteroscedasticity while also reducing the previous pattern in the residuals plot of just horsepower and mpg.
+
+We will include a log transform of horsepower into our original model:
+
+```{r}
+mpg_mod_final <- lm(mpg~log(horsepower) + log(displacement) + acceleration + cylinders_fac*origin_fac,
+                   data=Auto_filter)
+summary(mpg_mod_final)
+summary(mpg_mod)
+```
+
+Now we can compare the qq plots and residual plots from the original model to the final model:
+
+```{r}
+plot(mpg_mod_final,which = 1)
+title("Final Model")
+plot(mpg_mod, which = 1)
+title("Original Model")
+```
+
+and the qq plots:
+
+```{r}
+plot(mpg_mod_final,which = 2)
+title("Final Model")
+plot(mpg_mod, which = 2)
+title("Original Model")
+```
+
+We don't see significant qq improvement but see a much better residual spread.
+
+Now we will fit our model to the outcome of log(mpg):
+
+```{r}
+mpg_logmod_final <- lm(log(mpg)~log(horsepower) + log(displacement) + acceleration + cylinders_fac*origin_fac,
+                   data=Auto_filter)
+summary(mpg_logmod_final)
+summary(mpg_mod)
+```
+
+and do a plot comparison:
+
+```{r}
+plot(mpg_logmod_final,which = 1)
+title("Final Model")
+plot(mpg_mod, which = 1)
+title("Original Model")
+```
+
+```{r}
+plot(mpg_logmod_final,which = 2)
+title("Final Model")
+plot(mpg_mod, which = 2)
+title("Original Model")
+```
+
+Here we see significant qq improvement and a very good residual spread.
+
+The transformation of the outcome variable here is useful in that we have a much more accurate model which can be used for more accurate inference. The complexity of this model now makes interpretation difficult. What does it mean for there to be a linear relationship between the log of MPG and all of our other interacting/transformed variables? We can use this model to accurately predict the MPG of a vehicle in a population given these other variables (once we get an outcome and transform the log back to linear space) and so we can answer research questions about automotive population MPG, we just need to do mental gymnastics to explain why such an association exists.

@@ -1,0 +1,83 @@
+---
+title: "Intro to MLR"
+format: html
+editor: visual
+---
+
+## Fitting an MLR model
+
+```{r}
+library(tidyverse)
+library(ISLR2)
+data("Auto")
+glimpse(Auto)
+```
+
+```{r}
+library(tidyverse)
+library(ISLR2)
+data("Auto")
+glimpse(Auto)
+```
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg,col=origin))+
+  geom_point()+
+  labs(x="Vehicle weight (lbs)",
+       y="MPG")
+```
+
+```{r}
+#MLR model regressing mpg on weight and origin
+mlr_mod_auto <- lm(mpg~weight+origin,
+                   data=Auto)
+
+summary(mlr_mod_auto)
+```
+
+```{r}
+#create a factor variable
+Auto$origin_fac <- factor(Auto$origin,
+                          levels=c(1,2,3),
+                          labels=c("American",
+                                   "European",
+                                   "Japanese"))
+```
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg,col=origin_fac))+
+  geom_point()+
+  labs(x="Vehicle weight (lbs)",
+       y="MPG",col="Origin")
+```
+
+```{r}
+mlr_mod_fac <- lm(mpg~weight+origin_fac,
+                  data=Auto)
+
+summary(mlr_mod_fac)
+```
+
+On average, European cars' mpg is 0.97 higher than American cars' mpg, holding all else constant. This difference is not statistically significant at the 0.05 level (p=0.14).
+
+On average, per increase in weight (lb), mpg decreases by 0.007, all else constant. This is statistically significant (p\<0.001), so vehicle weight is associated with mpg.
+
+## Interaction
+
+```{r}
+ggplot(Auto, aes(x=weight,y=mpg,col=origin_fac))+
+  geom_point()+
+  geom_smooth(method="lm",se=F)+
+  labs(x="Vehicle weight (lbs)",
+       y="MPG",col="Origin")
+```
+
+```{r}
+mlr_mod_interact <- lm(mpg~weight*origin_fac,
+                       data=Auto)
+summary(mlr_mod_interact)
+```
+
+Per lb increase in weight, mpg increases by an **additional** 0.0000036, on average, all else held constant, for European cars compared to American cars. This difference is not statistically significant (p\>0.99).
+
+Per lb increase in weight, mpg decreases by 0.011, on average, for European cars. For American cars, mpg decreases by 0.007, on average, per lb increase in weight. The difference in effects, 0.004, is statistically significant at the 0.05 level (p=0.013).
