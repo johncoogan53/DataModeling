@@ -1,0 +1,112 @@
+---
+title: "Application Exercise 3"
+format: html
+editor: visual
+---
+
+## Application Exercise #3:
+
+We want to analyze the association between hitting statistics and salary in baseball
+
+```{r}
+library(ISLR2)
+library(tidyverse)
+library(car)
+data("Hitters")
+?Hitters #run this for the data dictionary
+```
+
+We want to understand how hitter statistics are associated with salaries. More specifically, we want to assess the model regressing Salary on the following predictors: Hits, HmRun, Runs, RBI, Years, CHits, CHmRun, CRuns, and CRBI. Let\'s first create a correlation plot of the 9 predictors. Comment on what you observe in the correlation plot.
+
+```{r}
+library(corrplot)
+corrplot(cor(Hitters[,c("Hits", "HmRun", "Runs", "RBI", "Years", 
+                        "CHits", "CHmRun","CRuns","CRBI")]))
+```
+
+```{r}
+glimpse(Hitters)
+```
+
+Now we want to regress salary on hitting statistics:
+
+```{r}
+hit_mod <- lm(Salary~Hits + HmRun + Runs + RBI + Years + CHits + CHmRun + CRuns + CRBI,
+                   data=Hitters)
+summary(hit_mod)
+```
+
+Now we will use the vif() function to determine if any variables have a high Variance Inflation Factor. This value measures how the multicollinearity between a variable and other variables inflates the variance of the regression coefficients of that variable.
+
+```{r}
+vif(hit_mod)
+```
+
+VIF Scale:
+
+1 -\> not correlated
+
+1-5 -\> moderate correlation
+
+VIF \> 5 -\> high correlation
+
+VIF \> 10 -\> very high correlation, likely collinear variables
+
+Here we see that hits, runs, RBI, CHits, CHmRun, CRuns, and CRBI have high VIF values. This makes sense because all offensive statistics are derived from career statistics (or they are directly related). We can fit another model without career variables to see this:
+
+```{r}
+hit_mod_NoC <- lm(Salary~Hits + HmRun + Runs + RBI + Years,
+                   data=Hitters)
+summary(hit_mod)
+summary(hit_mod_NoC)
+```
+
+Looking at the two models we can see that the collinear variables were inflating our standard error values, increasing our p values, and unduly inflating our estimates.
+
+And the VIF:
+
+```{r}
+vif(hit_mod_NoC)
+```
+
+Now we can see that there are no absurdly large VIF values indicating that our variables are not highly collinear.
+
+We can look at our diagnostic plots to see the difference between these two models:
+
+Looking at the leverage plots:
+
+```{r}
+plot(hit_mod, which = 5)
+```
+
+We can see high leverage points with career stats involved, removing these shows a lower amount of high leverage points.
+
+```{r}
+plot(hit_mod_NoC)
+```
+
+There are no points that have a cooks distance over 1 although there are outlying data points. We can check the model if we were to remove Rickey Henderson and Mike Schmidt.
+
+```{r}
+player_to_remove <- c("-Rickey Henderson", "-Mike Schmidt")
+
+# Remove rows where Team is one of the teams_to_remove
+reduced_hitters <- Hitters[!(row.names(Hitters) %in% player_to_remove), ]
+```
+
+```{r}
+hit_mod_NoC_red <- lm(Salary~Hits + HmRun + Runs + RBI + Years,
+                   data=reduced_hitters)
+summary(hit_mod_NoC_red)
+```
+
+lets compare the models:
+
+```{r}
+plot(hit_mod_NoC)
+
+```
+
+```{r}
+plot(hit_mod_NoC_red)
+```
