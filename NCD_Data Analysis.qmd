@@ -4,6 +4,8 @@ format: html
 editor: visual
 ---
 
+# Data Modeling Project Proposal
+
 # Life Expectancy Data Modeling Project Proposal:
 
 ### Team Members:
@@ -20,7 +22,7 @@ This data set investigates the intersection between a myriad of societal factors
 
 ### Future Vectors:
 
-This data set takes a comprehensive approach to inclusion of health factors which influence life expectancy. It does not have a thorough inclusion of economic factors which we believe are intrinsically linked to life expectancy. We would like to add GDP per-capita, Gini Index, and Household final consumption expenditure as additional variables (All sourced from the UN data explorer). We believe this will be a more comprehensive approach to assessing factors for life expectancy.
+This data set takes a comprehensive approach to inclusion of health factors which influence life expectancy. It does not have a thorough inclusion of economic factors which we believe are intrinsically linked to life expectancy. We would like to add GDP per-capita and Gini Index per-capita as additional variables (All sourced from the UN data explorer). We believe this will be a more comprehensive approach to assessing factors for life expectancy.
 
 It is our assumption that global health is more than a health-system issue and that investigating what the largest health factors are for life expectancy omits key, and dominant, economic factors. This data set will allow us to explore questions of global health in the context of national economic growth, wealth distribution, and consumer expenditure.
 
@@ -29,6 +31,7 @@ It is our assumption that global health is more than a health-system issue and t
 1.  Which national economic factors have the largest effect on life expectancy (GDP, Expenditure on health as a percentage of GDP, Wealth inequality, or base household expenditures)
 2.  Do national economic factors always directly correlate to better health outcomes (are there rich countries with poorer outcomes/ are there poorer countries whose health systems outperform rich countries). This is an interesting question because it can identify pre-existing healthcare models that are perhaps most efficient.
 3.  Categorize the relationship between economic growth and health outcomes (expected nonlinear relationship)
+4.  What is the impact of government expenditure on healthcare for life expectancy.
 
 ```{r}
 library(readr)
@@ -42,4 +45,28 @@ glimpse(life_exp)
 
 ```{r}
 variable.names(life_exp)
+```
+
+## Gini index data:
+
+Below we see the one of the gini data sets which has the same counties and years for the original. This is a subset since it was downloaded in multiple files.
+
+```{r}
+gini_gdp <- read_csv("albania-lebanon.csv",show_col_types = FALSE)
+```
+
+```{r}
+glimpse(gini_gdp)
+```
+
+## GDP
+
+Here is another slice of the appended GDP per-capita data set with the same countries and years as the original data set
+
+```{r}
+gdp_percap <- read_csv("gdp Japan-samoa.csv",show_col_types = FALSE)
+```
+
+```{r}
+glimpse(gdp_percap)
 ```
